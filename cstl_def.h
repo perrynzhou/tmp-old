@@ -61,6 +61,8 @@ typedef struct ctl_hashtable_t
 {
   vector_t tables;
   uint64_t table_cap;
+  uint64_t current_size;
   uint32_t hash_link_limit;//0 is unlimte;>0 is limite hash link node
+  pthread_mutex_t lock;
 } hashtable_t;
 #endif

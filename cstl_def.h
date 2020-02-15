@@ -51,4 +51,16 @@ typedef struct cstl_vector_t
   void **tables;
   pthread_mutex_t lock;
 } vector_t;
+//that as list_node value
+typedef struct cstl_hashtable_entry_t
+{
+  void *data;
+  int64_t timestamp;
+} hashtable_entry_t;
+typedef struct ctl_hashtable_t
+{
+  vector_t tables;
+  uint64_t table_cap;
+  uint32_t hash_link_limit;//0 is unlimte;>0 is limite hash link node
+} hashtable_t;
 #endif

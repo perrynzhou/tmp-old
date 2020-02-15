@@ -15,6 +15,7 @@ string_t *string_format_create(const char *fmt, ...);
 int string_copy_substring(string_t *se, const char *str, size_t n);
 int string_replace(string_t *se, const char *value);
 int string_reverse(string_t *se);
+int string_append(string_t *se,const char *src);
 int string_copy(string_t *dest, string_t *src);
 void string_print(string_t *se);
 void string_deinit(string_t *se);

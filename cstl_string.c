@@ -11,15 +11,6 @@
 #include <string.h>
 #include <stdarg.h>
 #include <assert.h>
-#define CSTL_STRING_INTERNAL_LENGTH (16)
-struct cstl_string_t
-{
-    union {
-        char buffer[CSTL_STRING_INTERNAL_LENGTH];
-        char *ptr;
-    } data;
-    size_t length;
-};
 static int string_format_init_from_args(string_t *se, const char *fmt, va_list args)
 {
     int ret = -1;
@@ -57,7 +48,7 @@ int string_replace(string_t *se, const char *value)
             {
                 if (len > cur_len)
                 {
-                    se->data.ptr = realloc(se->data.ptr, len + 1);
+                    se->data.ptr = (char *)realloc(se->data.ptr, len + 1);
                     assert(se->data.ptr != NULL);
                 }
                 strncpy(se->data.ptr, value, len);
@@ -71,6 +62,37 @@ int string_replace(string_t *se, const char *value)
         ret = 0;
     }
     return ret;
+}
+int string_append(string_t *se, const char *src)
+{
+    if (se != NULL && src != NULL)
+    {
+        size_t len = strlen(src);
+        size_t cur_len = string_length(se);
+        if (cur_len > CSTL_STRING_INTERNAL_LENGTH)
+        {
+            se->data.ptr = (char *)realloc(se->data.ptr, len + cur_len + 1);
+            assert(se->data.ptr);
+            se->data.ptr[cur_len + len] = '\0';
+        }
+        else
+        {
+            if (len >= (CSTL_STRING_INTERNAL_LENGTH - cur_len))
+            {
+                se->data.ptr = (char *)realloc(se->data.ptr, cur_len + len + 1);
+                assert(se->data.ptr != NULL);
+                memcpy(se->data.ptr + cur_len, src, len);
+                se->data.ptr[cur_len + len] = '\0';
+            }
+            else
+            {
+                memcpy(((char *)&se->data.buffer) + cur_len, src, len);
+            }
+        }
+        se->length = cur_len + len;
+        return 0;
+    }
+    return -1;
 }
 int string_copy_substring(string_t *se, const char *str, size_t n)
 {
@@ -130,7 +152,6 @@ int string_reverse(string_t *se)
             char tmp = ptr[end];
             ptr[end--] = ptr[start];
             ptr[start++] = tmp;
-            
         }
         return 0;
     }

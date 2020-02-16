@@ -31,19 +31,22 @@ inline void list_node_destroy(list_node_t *node)
     node = NULL;
   }
 }
-list_t *list_create(cstl_list_node_value_cmp cmp)
+list_t *list_create()
 {
-  list_t *lt = NULL;
-  if (cmp != NULL)
-  {
-    lt = (list_t *)calloc(1, sizeof(list_t));
+  list_t *lt  = (list_t *)calloc(1, sizeof(list_t));
     if (lt != NULL)
     {
       lt->head = lt->tail = NULL;
       lt->size = 0;
-    }
+    
   }
   return lt;
+}
+void list_set_callback(list_t *lt,cstl_list_node_value_free free,cstl_list_node_value_cmp cmp){
+   if(lt!=NULL && free!=NULL && cmp!=NULL) {
+     lt->cmp=cmp;
+     lt->free=free;
+   }
 }
 int list_insert(list_t *lt, list_node_t *node)
 {
@@ -102,15 +105,22 @@ void list_destroy(list_t *lt)
       {
         list_node_t *next = head->next;
         list_node_t *prev = tail->prev;
+        if(lt->free !=NULL) {
+          lt->free(head->value);
+          lt->free(tail->value);
+
+        }
         list_node_destroy(head);
         list_node_destroy(tail);
         head = next;
         tail = prev;
-
         __sync_fetch_and_sub(&lt->size, 1);
       }
       if (lt->size > 0)
       {
+         if(lt->free !=NULL) {
+          lt->free(head->value);
+        }
         list_node_destroy(head);
         __sync_fetch_and_sub(&lt->size, 1);
         head = tail = NULL;

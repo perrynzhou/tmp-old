@@ -22,7 +22,7 @@ typedef struct cstl_string_t
 } string_t;
 
 typedef int (*cstl_list_node_value_cmp)(void *, void *);
-
+typedef void (*cstl_list_node_value_free)(void *);
 typedef struct cstl_list_node_t
 {
   struct cstl_list_node_t *next;
@@ -35,6 +35,7 @@ typedef struct cstl_list_t
   list_node_t *tail;
   size_t size;
   cstl_list_node_value_cmp cmp;
+  cstl_list_node_value_free free;
 } list_t;
 typedef struct cstl_netsocket_t
 {
@@ -63,6 +64,7 @@ typedef struct ctl_hashtable_t
   vector_t tables;
   uint32_t max_bucket;
   uint32_t link_limit;//0 is unlimte;>0 is limite hash link node
+  pthread_mutex_t lock;
 } hashtable_t;
 typedef struct cstl_bloom_filter_t {
   uint64_t  max_hash;

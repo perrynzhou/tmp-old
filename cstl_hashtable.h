@@ -16,4 +16,6 @@ int hashtable_delete(hashtable_t *ht, uint64_t hash, int64_t data_timestamp);
 void *hashtable_search(hashtable_t *ht, uint64_t hash, int64_t data_timestamp);
 void hashtable_deinit(hashtable_t *ht);
 void hashtable_destroy(hashtable_t *ht);
+size_t hashtable_size(hashtable_t *ht);
+uint32_t hashtable_limit_size(hashtable_t *ht);
 #endif

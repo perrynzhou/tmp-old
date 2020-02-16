@@ -10,7 +10,8 @@
 #include "cstl_def.h"
 list_node_t *list_node_create(void *value);
 void list_node_destroy(list_node_t *node);
-list_t *list_create(cstl_list_node_value_cmp cmp);
+list_t *list_create();
+void list_set_callback(list_t *lt,cstl_list_node_value_free free,cstl_list_node_value_cmp cmp);
 int list_insert(list_t *lt,list_node_t *node);
 int list_delete(list_t *lt,list_node_t *node);
 void list_destroy(list_t *lt);

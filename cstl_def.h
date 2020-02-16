@@ -11,7 +11,9 @@
 #include <stdint.h>
 #include <pthread.h>
 #define CSTL_STRING_INTERNAL_LENGTH (16)
-typedef uint64_t  (*hash_fn)(const void *data,size_t len);
+typedef uint64_t  (*cstl_hash_fn)(const void *data,size_t len);
+typedef int   (*cstl_cmp_fn)(void *,void *);
+typedef void (*cstl_free_fn)(void *);
 typedef struct cstl_string_t
 {
   union {
@@ -20,9 +22,6 @@ typedef struct cstl_string_t
   } data;
   size_t length;
 } string_t;
-
-typedef int (*cstl_list_node_value_cmp)(void *, void *);
-typedef void (*cstl_list_node_value_free)(void *);
 typedef struct cstl_list_node_t
 {
   struct cstl_list_node_t *next;
@@ -34,8 +33,8 @@ typedef struct cstl_list_t
   list_node_t *head;
   list_node_t *tail;
   size_t size;
-  cstl_list_node_value_cmp cmp;
-  cstl_list_node_value_free free;
+  cstl_cmp_fn cmp;
+  cstl_free_fn free;
 } list_t;
 typedef struct cstl_netsocket_t
 {
@@ -54,21 +53,16 @@ typedef struct cstl_vector_t
   pthread_mutex_t lock;
 } vector_t;
 //that as list_node value
-typedef struct cstl_hashtable_entry_t
-{
-  void *data;
-  uint64_t  timestamp;
-} hashtable_entry_t;
 typedef struct ctl_hashtable_t
 {
   vector_t tables;
   uint32_t max_bucket;
-  uint32_t link_limit;//0 is unlimte;>0 is limite hash link node
+  cstl_cmp_fn cmp;
   pthread_mutex_t lock;
 } hashtable_t;
 typedef struct cstl_bloom_filter_t {
-  uint64_t  max_hash;
   vector_t  fn;
   uint8_t   *data;
+  uint64_t max_hash_range;
 }bloom_filter_t;
 #endif

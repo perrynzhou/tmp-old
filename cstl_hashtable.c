@@ -33,41 +33,22 @@ static inline uint64_t hashtable_jump_consistent(uint64_t key, uint64_t num_buck
   value = (b < 0) ? (~b + 1) : b;
   return value;
 }
-static inline hashtable_entry_t *hashtable_entry_create(void *data)
+
+int hashtable_init(hashtable_t *ht, uint32_t max_buckets,cstl_cmp_fn fn)
 {
-  hashtable_entry_t *het = (hashtable_entry_t *)calloc(1, sizeof(hashtable_entry_t));
-  if (het != NULL)
-  {
-    het->data = data;
-    het->timestamp = hashtable_fetch_timestamp();
-  }
-  return het;
-}
-static void hashtable_entry_destroy(void *het)
-{
-  if (het != NULL)
-  {
-    hashtable_entry_t *he = (hashtable_entry_t *)het;
-    free(het);
-    het = NULL;
-  }
-}
-int hashtable_init(hashtable_t *ht, uint32_t max_buckets, uint32_t link_limit)
-{
-  if (ht != NULL)
+  if (ht != NULL&&fn!=NULL)
   {
     vector_init(&ht->tables, max_buckets);
-    ht->link_limit = link_limit;
     return 0;
   }
   return -1;
 }
-hashtable_t *hashtable_create(uint32_t max_buckets, uint32_t link_limit)
+hashtable_t *hashtable_create(uint32_t max_buckets, cstl_cmp_fn fn)
 {
   hashtable_t *ht = (hashtable_t *)calloc(1, sizeof(hashtable_t));
   if (ht != NULL)
   {
-    if (hashtable_init(ht, link_limit, max_buckets) != 0)
+    if (hashtable_init(ht, max_buckets,fn) != 0)
     {
       free(ht);
       ht = NULL;
@@ -77,7 +58,7 @@ hashtable_t *hashtable_create(uint32_t max_buckets, uint32_t link_limit)
 }
 
 //return data insert timestamp,that as unique id for data
-uint64_t hashtable_insert(hashtable_t *ht, uint64_t hash, void *data)
+int hashtable_insert(hashtable_t *ht, void *data,uint64_t hash)
 {
   uint64_t index = hashtable_jump_consistent(hash, ht->max_bucket);
   list_t *lt = (list_t *)vector_at(&ht->tables, index);
@@ -86,18 +67,15 @@ uint64_t hashtable_insert(hashtable_t *ht, uint64_t hash, void *data)
     lt = list_create();
     vector_push_back(&ht->tables, lt);
   }
-  if (ht->link_limit > 0 && lt->size > ht->link_limit)
-  {
-    return 0;
+  list_node_t *node = list_node_create(data);
+  if(node!=NULL) {
+     list_insert(lt, node);
+     return 0;
   }
-  hashtable_entry_t *het = hashtable_entry_create(data);
-  assert(het != NULL);
-  list_node_t *node = list_node_create(het);
-  assert(node != NULL);
-  list_insert(lt, node);
-  return het->timestamp;
+  list_node_destroy(node);
+  return -1;
 }
-static void *hashtable_search_node(hashtable_t *ht, uint64_t hash, int64_t data_timestamp)
+static void *hashtable_search_node(hashtable_t *ht, void *key,uint64_t hash)
 {
   list_node_t *result = NULL;
   if (ht != NULL)
@@ -110,8 +88,7 @@ static void *hashtable_search_node(hashtable_t *ht, uint64_t hash, int64_t data_
       while (cur != NULL)
       {
         list_node_t *next = cur->next;
-        hashtable_entry_t *het = (hashtable_entry_t *)cur->value;
-        if (het->timestamp == data_timestamp)
+        if (ht->cmp(cur->value,key) ==0)
         {
           result = cur;
           break;
@@ -121,16 +98,14 @@ static void *hashtable_search_node(hashtable_t *ht, uint64_t hash, int64_t data_
   }
   return result;
 }
-int hashtable_delete(hashtable_t *ht, uint64_t hash, int64_t data_timestamp)
+int hashtable_delete(hashtable_t *ht, void *key,uint64_t hash)
 {
-  list_node_t *node = (list_node_t *)hashtable_search_node(ht, hash, data_timestamp);
+  list_node_t *node = (list_node_t *)hashtable_search_node(ht, key,hash);
   if (node != NULL)
   {
     pthread_mutex_lock(&ht->lock);
-    hashtable_entry_t *het = (hashtable_entry_t *)node->value;
     uint64_t index = hashtable_jump_consistent(hash, ht->max_bucket);
     list_t *lt = (list_t *)vector_at(&ht->tables, index);
-    hashtable_entry_destroy(het);
     list_delete(lt, node);
     list_node_destroy(node);
     pthread_mutex_unlock(&ht->lock);
@@ -138,15 +113,13 @@ int hashtable_delete(hashtable_t *ht, uint64_t hash, int64_t data_timestamp)
   }
   return -1;
 }
-void *hashtable_search(hashtable_t *ht, uint64_t hash, int64_t data_timestamp)
+void *hashtable_search(hashtable_t *ht, void *key,uint64_t hash)
 {
-  list_node_t *node = (list_node_t *)hashtable_search_node(ht, hash, data_timestamp);
+  list_node_t *node = (list_node_t *)hashtable_search_node(ht, key,hash);
   void *result = NULL;
   if (node != NULL)
   {
-    pthread_mutex_lock(&ht->lock);
-    hashtable_entry_t *het = (hashtable_entry_t *)node->value;
-    result = het->data;
+    result = node->value;
   }
   return result;
 }
@@ -159,7 +132,6 @@ void hashtable_deinit(hashtable_t *ht)
       list_t *lt = (list_t *)vector_at(&ht->tables, i);
       if (lt != NULL && lt->size > 0)
       {
-        lt->free = (cstl_list_node_value_free)&hashtable_entry_destroy;
         list_destroy(lt);
       }
     }
@@ -174,9 +146,5 @@ void hashtable_destroy(hashtable_t *ht)
   }
 }
 size_t hashtable_size(hashtable_t *ht){
-   int size = (ht==0)?0:(vector_size(&ht->tables));
-   return size;
-}
-uint32_t hashtable_limit_size(hashtable_t *ht){
-   return ht->link_limit;
+   return ((ht==NULL)?0:(vector_size(&ht->tables)));
 }

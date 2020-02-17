@@ -23,6 +23,9 @@ extern "C"
 #include <cstl_netsocket.h>
 #include <cstl_string.h>
 #include <cstl_vector.h>
+#include <cstl_bloom_filter.h>
+#include <cstl_hashtable.h>
+#include <cstl_utils.h>
 #ifdef __cplusplus
 }
 #endif

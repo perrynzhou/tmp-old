@@ -62,7 +62,7 @@ typedef struct ctl_hashtable_t
 } hashtable_t;
 typedef struct cstl_bloom_filter_t {
   vector_t  fn;
-  uint8_t   *data;
+  uint8_t   *bitmap;
   uint64_t max_hash_range;
 }bloom_filter_t;
 #endif

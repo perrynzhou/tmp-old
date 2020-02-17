@@ -1,12 +1,12 @@
 /*************************************************************************
-  > File Name: hash.h
+  > File Name: cstl_hash.h
   > Author:perrynzhou 
   > Mail:perrynzhou@gmail.com 
   > Created Time: Fri 07 Feb 2020 12:18:27 PM CST
  ************************************************************************/
 
-#ifndef _HASH_H
-#define _HASH_H
+#ifndef _CSTL_HASH_H
+#define _CSTL_HASH_H
 #include <stdint.h>
 #include <stdio.h>
 uint32_t hash_crc16(const char* key, size_t key_length);

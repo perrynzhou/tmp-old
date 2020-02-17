@@ -5,8 +5,8 @@
   > Created Time: Tue 31 Dec 2019 05:43:53 PM CST
  ************************************************************************/
 
-#ifndef _CSTL_vector_H
-#define _CSTL_vector_H
+#ifndef _CSTL_VECTOR_H
+#define _CSTL_VECTOR_H
 #include <stdint.h>
 #include <stdio.h>
 #include <pthread.h>

@@ -9,7 +9,7 @@
 #include "cstl_vector.h"
 #include "cstl_def.h"
 #include <stdlib.h>
-#include <stdlib.h>
+#include <stdint.h>
 #define CSTL_BLOOM_FILTER_SHIFT (3)
 #define CSTL_BLOOM_FILTER_MASK (0x7)
 #define CSTL_BLOOM_FILTER_DEFAULT_HASH_RANGE (16384)
@@ -60,9 +60,9 @@ void bloom_filter_put(bloom_filter_t *bf, const void *key, size_t len)
     }
   }
 }
-uint8_t bloom_filter_get(bloom_filter_t *bf, const void *key, size_t len)
+bool bloom_filter_get(bloom_filter_t *bf, const void *key, size_t len)
 {
-  uint8_t test = 1;
+  bool test = true;
   if (bf != NULL && key != NULL)
   {
     for (uint32_t i = 0; i < vector_size(&bf->fn); i++)
@@ -71,7 +71,7 @@ uint8_t bloom_filter_get(bloom_filter_t *bf, const void *key, size_t len)
       uint64_t n = fn(key, len);
       if (!(bf->bitmap[n >> CSTL_BLOOM_FILTER_SHIFT] | (1 << (n & CSTL_BLOOM_FILTER_MASK))))
       {
-        test = 0;
+        test = false;
         break;
       }
     }

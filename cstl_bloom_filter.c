@@ -31,7 +31,7 @@ int bloom_filter_init(bloom_filter_t *bf, uint64_t max_hash_range)
   if (bf != NULL)
   {
     uint64_t real_max_hash = (max_hash_range < CSTL_BLOOM_FILTER_DEFAULT_HASH_RANGE) ? CSTL_BLOOM_FILTER_DEFAULT_HASH_RANGE : max_hash_range;
-    real_max_hash = real_max_hash & (CSTL_BLOOM_FILTER_BASE_BIT - 1);
+    real_max_hash = (real_max_hash / CSTL_BLOOM_FILTER_BASE_BIT) + 1;
     bf->bitmap = (uint8_t *)calloc(real_max_hash >> 3, sizeof(uint8_t));
     if (bf->bitmap != NULL)
     {
